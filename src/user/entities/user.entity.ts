@@ -1,4 +1,4 @@
-import { Login } from "src/login/login.entity";
+import { Account } from "src/account/account.entity";
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
@@ -19,7 +19,9 @@ export class User {
     @Column({default: () => 'CURRENT_TIMESTAMP'})
     createdAt: Date;
 
-    @OneToOne(() => Login, login => login.user, { cascade: true })
-    @JoinColumn({name: 'user_id'})
-    login: Login;
+    @Column({onUpdate: 'CURRENT_TIMESTAMP', nullable: true})
+    updatedAt: Date;
+
+    @OneToOne(() => Account, login => login.user, { cascade: true })
+    account: Account;
 }
