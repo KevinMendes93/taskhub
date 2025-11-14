@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UserModule } from './user/user.module';
+import { UserModule } from './entities/user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from './auth/auth.module';
-import { AccountModule } from './account/account.module';
-import { IsUniqueConstraint } from './validators/is-unique.validator';
+import { AuthModule } from './security/auth/auth.module';
+import { AccountModule } from './entities/account/account.module';
+import { TaskModule } from './entities/task/task.module';
+import { CategoryModule } from './entities/category/category.module';
 
 @Module({
   imports: [
@@ -22,8 +23,10 @@ import { IsUniqueConstraint } from './validators/is-unique.validator';
     }),
     AuthModule,
     AccountModule,
+    TaskModule,
+    CategoryModule,
   ],
   controllers: [],
-  providers: [IsUniqueConstraint],
+  providers: [],
 })
 export class AppModule {}
