@@ -14,17 +14,19 @@ export class AuthService {
   async signIn(login: string, pass: string): Promise<any> {
     const account = await this.accountService.findOne(login);
 
-    const isMatch = account ? await bcrypt.compare(pass, account?.password) : false;
+    const isMatch = account
+      ? await bcrypt.compare(pass, account?.password)
+      : false;
 
     if (!isMatch) {
       throw new UnauthorizedException();
     }
 
-    const payload = { 
+    const payload = {
       sub: account.id,
       username: account.user.name,
       email: account.user.email,
-      roles: account.user.roles
+      roles: account.user.roles,
     };
 
     return {

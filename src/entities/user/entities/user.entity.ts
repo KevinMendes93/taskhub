@@ -25,14 +25,14 @@ export class User {
   @OneToOne(() => Account, (account) => account.user)
   account: Account;
 
-  @Column({default: Role.User})
-  role: String;
+  @Column({ default: Role.User })
+  role: string;
 
   @Column({
     type: 'enum',
     enum: Role,
     array: true,
-    default: [Role.User]
+    default: [Role.User],
   })
   roles: Role[];
 }

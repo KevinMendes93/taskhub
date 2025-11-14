@@ -1,8 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsStrongPassword, ValidateNested } from 'class-validator';
 import { CreateUserDto } from 'src/entities/user/dto/create-user.dto';
-import { IsUnique } from 'src/validators/is-unique.validator';
-import { Account } from '../account.entity';
 
 export class CreateAccountDto {
   @IsNotEmpty({ message: 'Login is required' })
