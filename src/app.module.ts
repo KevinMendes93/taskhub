@@ -3,11 +3,12 @@ import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { LoginModule } from './account/account.module';
+import { AccountModule } from './account/account.module';
+import { IsUniqueConstraint } from './validators/is-unique.validator';
 
 @Module({
   imports: [
-    UserModule, 
+    UserModule,
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -17,12 +18,12 @@ import { LoginModule } from './account/account.module';
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.ENV === "development",
+      synchronize: process.env.ENV === 'development',
     }),
     AuthModule,
-    LoginModule,
+    AccountModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [IsUniqueConstraint],
 })
 export class AppModule {}
