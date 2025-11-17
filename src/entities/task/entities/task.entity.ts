@@ -1,12 +1,12 @@
 import { Category } from 'src/entities/category/entities/category.entity';
 import { User } from 'src/entities/user/entities/user.entity';
 import { Status } from 'src/enums/status.enum';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'tasks' })
 export class Task {
+
   @PrimaryGeneratedColumn()
-  @Column({ name: 'id' })
   id: number;
 
   @Column({ name: 'title' })
@@ -32,8 +32,10 @@ export class Task {
   updatedAt: Date;
 
   @ManyToOne(() => User, (user) => user.id, { cascade: true })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @ManyToOne(() => Category, (category) => category.id, { cascade: true })
+  @JoinColumn({ name: 'category_id' })
   category: Category;
 }

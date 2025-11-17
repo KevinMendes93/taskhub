@@ -3,6 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { AccountService } from 'src/entities/account/account.service';
 import { CreateAccountDto } from 'src/entities/account/dto/create-account.dto';
 import * as bcrypt from 'bcrypt';
+import { plainToInstance } from 'class-transformer';
+import { AccountResponseDto } from 'src/entities/account/dto/account-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,15 +20,13 @@ export class AuthService {
       ? await bcrypt.compare(pass, account?.password)
       : false;
 
-    if (!isMatch) {
-      throw new UnauthorizedException();
-    }
+    if (!isMatch) throw new UnauthorizedException("User or Password don't match");
 
     const payload = {
       sub: account.id,
       username: account.user.name,
       email: account.user.email,
-      roles: account.user.roles,
+      roles: account.user.roles
     };
 
     return {
@@ -35,6 +35,8 @@ export class AuthService {
   }
 
   async register(account: CreateAccountDto) {
-    return await this.accountService.createAccount(account);
+    const createdAccount = await this.accountService.createAccount(account);
+
+    return plainToInstance(AccountResponseDto, createdAccount);
   }
 }

@@ -1,7 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAccountDto } from 'src/entities/account/dto/create-account.dto';
 import { LoginDto } from 'src/entities/account/dto/login.dto';
+import { ApiResponse } from 'src/common/dto/api-response.dto';
+import { AuthGuard } from '../guards/auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/enums/role.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -9,13 +14,17 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  signIn(@Body() loginDto: LoginDto) {
-    return this.authService.signIn(loginDto.login, loginDto.password);
+  async signIn(@Body() loginDto: LoginDto) {
+    const result = await this.authService.signIn(loginDto.login, loginDto.password);
+    return ApiResponse.success('Login successful', result);
   }
 
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   @Post('register')
-  register(@Body() account: CreateAccountDto) {
-    return this.authService.register(account);
+  async register(@Body() account: CreateAccountDto) {
+    const result = await this.authService.register(account);
+    return ApiResponse.success('Account created successfully', result);
   }
 }

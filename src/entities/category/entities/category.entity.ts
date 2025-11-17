@@ -1,5 +1,5 @@
 import { User } from 'src/entities/user/entities/user.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('category')
 export class Category {
@@ -13,5 +13,6 @@ export class Category {
   description: string;
 
   @ManyToOne(() => User, (user) => user.id, { cascade: true })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 }

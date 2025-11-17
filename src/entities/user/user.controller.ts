@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -15,6 +17,8 @@ import { AuthGuard } from 'src/security/guards/auth.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/enums/role.enum';
 import { RolesGuard } from 'src/security/guards/roles.guard';
+import { ApiResponse } from 'src/common/dto/api-response.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Controller('user')
 @UseGuards(AuthGuard, RolesGuard)
@@ -23,28 +27,41 @@ export class UserController {
 
   @Post()
   @Roles(Role.Admin)
-  async create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() createUserDto: CreateUserDto): Promise<ApiResponse<UserResponseDto>> {
+    const user = await this.userService.create(createUserDto);
+    return ApiResponse.success('User created successfully', user);
   }
 
   @Get()
-  @Roles(Role.User)
+  @Roles(Role.Admin)
+  @HttpCode(HttpStatus.OK)
   async findAll() {
-    return this.userService.findAll();
+    const users = await this.userService.findAll();
+    return ApiResponse.success('Users retrieved successfully', users);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  @Roles(Role.Admin, Role.User)
+  @HttpCode(HttpStatus.OK)
+  async findOne(@Param('id') id: string) {
+    const user = await this.userService.findOne(+id);
+    return ApiResponse.success('User retrieved successfully', user);
   }
 
   @Patch(':id')
+  @Roles(Role.Admin, Role.User)
+  @HttpCode(HttpStatus.OK)
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+    const user = await this.userService.update(+id, updateUserDto);
+    return ApiResponse.success('User updated successfully', user);
   }
 
   @Delete(':id')
+  @Roles(Role.Admin)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+    await this.userService.remove(+id);
+    return ApiResponse.success('User deleted successfully', null);
   }
 }

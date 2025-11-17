@@ -1,6 +1,8 @@
 import { Account } from 'src/entities/account/account.entity';
+import { Category } from 'src/entities/category/entities/category.entity';
+import { Task } from 'src/entities/task/entities/task.entity';
 import { Role } from 'src/enums/role.enum';
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class User {
@@ -25,9 +27,6 @@ export class User {
   @OneToOne(() => Account, (account) => account.user)
   account: Account;
 
-  @Column({ default: Role.User })
-  role: string;
-
   @Column({
     type: 'enum',
     enum: Role,
@@ -35,4 +34,10 @@ export class User {
     default: [Role.User],
   })
   roles: Role[];
+
+  @OneToMany(() => Task, (task) => task.user)
+  tasks: Task[];
+
+  @OneToMany(() => Category, (category) => category.user)
+  categories: Category[]
 }
