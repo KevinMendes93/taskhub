@@ -58,7 +58,13 @@ export class UserService {
     return this.userRepository.delete(id);
   }
 
+  public async userExists(userId: number): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    return !!user;
+  }
+
   private async findUserById(id: number): Promise<User | null> {
     return await this.userRepository.findOneBy({ id });
   }
+
 }

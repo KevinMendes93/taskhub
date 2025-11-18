@@ -1,4 +1,7 @@
-import { IsEnum, IsNotEmpty } from "class-validator";
+import { Type } from "class-transformer";
+import { IsEnum, IsNotEmpty, ValidateNested } from "class-validator";
+import { CategoryReferenceDto } from "src/entities/category/dto/category-reference.dto";
+import { UserReferenceDto } from "src/entities/user/dto/user-reference.dto";
 import { Status } from "src/enums/status.enum";
 
 export class CreateTaskDto {
@@ -14,7 +17,13 @@ export class CreateTaskDto {
 
     dueDate?: Date;
 
-    @IsNotEmpty({ message: 'User ID should not be empty' })
-    userId: number;
-    categoryId: number;
+    @ValidateNested()
+    @Type(() => UserReferenceDto)
+    @IsNotEmpty({message: 'User is Required'})
+    user: UserReferenceDto;
+    
+    @ValidateNested()
+    @Type(() => CategoryReferenceDto)
+    @IsNotEmpty({message: 'Category is Required'})
+    category: CategoryReferenceDto;
 }

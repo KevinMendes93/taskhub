@@ -1,4 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
+import { CategoryResponseDto } from 'src/entities/category/dto/category-response.dto';
+import { UserResponseDto } from 'src/entities/user/dto/user-response.dto';
 
 @Exclude()
 export class TaskResponseDto {
@@ -24,17 +26,10 @@ export class TaskResponseDto {
   updatedAt: Date;
 
   @Expose()
-  @Type(() => Object)
-  user: {
-    id: number;
-    name: string;
-    email: string;
-  };
+  @Type(() => UserResponseDto)
+  user: UserResponseDto;
 
   @Expose()
-  @Type(() => Object)
-  category: {
-    id: number;
-    name: string;
-  };
+  @Type(() => CategoryResponseDto)
+  category: CategoryResponseDto;
 }

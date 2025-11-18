@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { CategoryResponseDto } from './dto/category-response.dto';
 import { User } from '../user/entities/user.entity';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class CategoryService {
@@ -14,14 +15,22 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userService: UserService
   ){}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const userExists = await this.userExists(createCategoryDto.user.id);
-    if (!userExists) {
+    const userExists = await this.userService.userExists(createCategoryDto.user.id);
+    if(!userExists) {
       throw new NotFoundException(`User with ID ${createCategoryDto.user.id} not found`);
+    };
+
+    const existsCategoryNameInUser = await this.categoryRepository.existsBy({ 
+      name: createCategoryDto.name,
+      user: { id: createCategoryDto.user.id }
+    });
+
+    if (existsCategoryNameInUser) {
+      throw new NotFoundException(`Category with name ${createCategoryDto.name} already exists for this user`);
     }
 
     const category = this.categoryRepository.create(createCategoryDto);
@@ -31,17 +40,17 @@ export class CategoryService {
   }
 
   async findAll() {
-    const categories = this.categoryRepository.find({ relations: ['user'] });
+    const categories = await this.categoryRepository.find({ relations: ['user'] });
     return plainToInstance(CategoryResponseDto, categories);
   }
 
   async findAllByUser(userId: number) {
-    const userExists = await this.userExists(userId);
+    const userExists = await this.userService.userExists(userId);
     if (!userExists) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const categories = this.categoryRepository.find({ 
+    const categories = await this.categoryRepository.find({ 
       where: { user: { id: userId } },
       relations: ['user']
     });
@@ -50,37 +59,54 @@ export class CategoryService {
   }
 
   async findOne(id: number) {
+    const existsCategory = await this.categoryExists(id);
+    if (!existsCategory) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+    
     const category = await this.categoryRepository.findOne({
       where: { id },
       relations: ['user']
     });
 
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
-
     return plainToInstance(CategoryResponseDto, category);
   }
 
-  //TODO tudo pra baixo daqui
   async update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    const category = await this.categoryRepository.findOne({ where: { id } });
-    if (!category) {
+    const existsCategory = await this.categoryExists(id);
+    if (!existsCategory) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
+    const categoryBelongsToUser = await this.categoryRepository.existsBy({ 
+      id, 
+      user: { id: updateCategoryDto.user.id }
+    });
+    if (!categoryBelongsToUser) {
+      throw new NotFoundException(`Category with ID ${id} does not belong to User with ID ${updateCategoryDto.user.id}`);
+    }
+
     await this.categoryRepository.update(id, updateCategoryDto);
-    const updatedCategory = await this.categoryRepository.findOne({ where: { id }, relations: ['user'] });
+    const updatedCategory = await this.categoryRepository.findOne({ 
+      where: { id }, 
+      relations: ['user'] 
+    });
 
     return plainToInstance(CategoryResponseDto, updatedCategory);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async remove(id: number) {
+    const existsCategory = await this.categoryExists(id);
+    if (!existsCategory) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+
+    await this.categoryRepository.delete(id);
+    return {deleted: true, id};
   }
 
-  private async userExists(userId: number): Promise<boolean> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    return !!user;
+  private async categoryExists(id: number): Promise<Boolean> {
+    const category = await this.categoryRepository.findOne({ where: { id } });
+    return !!category;
   }
 }

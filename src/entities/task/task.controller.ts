@@ -13,6 +13,8 @@ import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiResponse } from 'src/common/dto/api-response.dto';
+import { Roles } from 'src/decorators/roles.decorator';
+import { Role } from 'src/enums/role.enum';
 
 @Controller('task')
 export class TaskController {
@@ -30,6 +32,14 @@ export class TaskController {
   async findAll() {
     const tasks = await this.taskService.findAll();
     return ApiResponse.success('Tasks retrieved successfully', tasks);
+  }
+
+  @Get('user/:id')
+  @Roles(Role.User)
+  @HttpCode(HttpStatus.OK)
+  async findAllByUser(@Param('id') id: string) {
+    const tasks = await this.taskService.findAllByUser(+id);
+    return ApiResponse.success('Category retrieved successfully', tasks);
   }
 
   @Get(':id')
