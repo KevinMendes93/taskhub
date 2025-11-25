@@ -11,6 +11,7 @@ import { UserModule } from '../user/user.module';
   imports: [
     TypeOrmModule.forFeature([Category]),
     UserModule
-  ]
+  ],
+  exports: [CategoryService]
 })
 export class CategoryModule {}

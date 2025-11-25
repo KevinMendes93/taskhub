@@ -8,6 +8,7 @@ import { plainToInstance } from 'class-transformer';
 import { CategoryResponseDto } from './dto/category-response.dto';
 import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
+import { CreateTaskDto } from '../task/dto/create-task.dto';
 
 @Injectable()
 export class CategoryService {
@@ -105,8 +106,12 @@ export class CategoryService {
     return {deleted: true, id};
   }
 
-  private async categoryExists(id: number): Promise<Boolean> {
+  async categoryExists(id: number): Promise<Boolean> {
     const category = await this.categoryRepository.findOne({ where: { id } });
     return !!category;
+  }
+
+  async existsCategoryInUser(dto: CreateTaskDto) {
+    return await this.categoryRepository.existsBy({ user: { id: dto.user.id }, id: dto.category.id });
   }
 }
