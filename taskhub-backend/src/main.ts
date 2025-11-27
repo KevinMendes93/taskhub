@@ -15,7 +15,10 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  app.enableCors();
+  app.enableCors({
+    origin: '*',
+    credentials: true
+  });
 
   await app.listen(process.env.PORT ?? 3001);
 }

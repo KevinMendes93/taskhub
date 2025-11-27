@@ -16,28 +16,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Restaura sessão ao carregar app
   useEffect(() => {
+    console.log('🔄 AuthProvider: Carregando sessão do localStorage...');
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
+    console.log('📦 Token encontrado:', !!savedToken);
+    console.log('📦 User encontrado:', !!savedUser);
+
     if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setToken(savedToken);
+        setUser(parsedUser);
+        console.log('✅ Sessão restaurada:', parsedUser);
+      } catch (error) {
+        console.error('❌ Erro ao parsear user:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
 
     setIsLoading(false);
+    console.log('✅ AuthProvider: Carregamento concluído');
   }, []);
 
   const login = async (credentials: LoginDto) => {
-    const response = await authService.login(credentials);
-    const decoded = jwtDecode<JwtPayload>(response.access_token);
+    console.log('🔐 login: Iniciando processo...');
+    
+    try {
+      console.log('🔐 login: Chamando authService.login');
+      const response = await authService.login(credentials);
+      console.log('🔐 login: Resposta recebida:', response);
+      
+      if (!response.access_token) {
+        throw new Error('Token não recebido do servidor');
+      }
 
-    localStorage.setItem('token', response.access_token);
-    localStorage.setItem('user', JSON.stringify(decoded));
+      const decoded = jwtDecode<JwtPayload>(response.access_token);
+      console.log('🔓 login: Token decodificado:', decoded);
 
-    setToken(response.access_token);
-    setUser(decoded);
+      // Salva no localStorage
+      console.log('💾 login: Salvando no localStorage...');
+      localStorage.setItem('token', response.access_token);
+      localStorage.setItem('user', JSON.stringify(decoded));
+      console.log('💾 login: Salvo com sucesso');
 
-    router.push('/dashboard');
+      // Atualiza o estado
+      console.log('📝 login: Atualizando estado do React...');
+      setToken(response.access_token);
+      setUser(decoded);
+      console.log('✅ login: Estado atualizado');
+
+      // Redireciona
+      console.log('🚀 login: Tentando redirecionar para /dashboard...');
+      console.log('🚀 login: URL atual:', window.location.href);
+      
+      // Tenta múltiplas formas de redirecionamento
+      try {
+        window.location.href = '/dashboard';
+        console.log('🚀 login: window.location.href executado');
+      } catch (redirectError) {
+        console.error('❌ login: Erro no redirecionamento:', redirectError);
+        // Fallback
+        router.push('/dashboard');
+        console.log('🚀 login: router.push executado como fallback');
+      }
+    } catch (error) {
+      console.error('❌ login: Erro geral:', error);
+      throw error;
+    }
   };
 
   const register = async (data: CreateAccountDto) => {
@@ -50,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(response.access_token);
     setUser(decoded);
 
-    router.push('/dashboard');
+    window.location.href = '/dashboard';
   };
 
   const logout = () => {
@@ -78,6 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     hasRole,
   };
+
+  console.log('📊 AuthContext state:', { isAuthenticated: !!token, isLoading, hasUser: !!user });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

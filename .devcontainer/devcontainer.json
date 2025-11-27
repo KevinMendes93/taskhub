@@ -1,0 +1,22 @@
+{
+  "name": "Node + NVM DevContainer",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "forwardPorts": [3001, 3000],
+  "portsAttributes": {
+    "3001": {
+      "label": "NestJs App",
+      "onAutoForward": "openBrowser"
+    }    ,
+    "3000": {
+      "label": "NextJs App",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "postCreateCommand": "bash -i -l -c 'nvm install 18.20.8 && nvm use 18.20.8' && npm install -g @nestjs/cli",
+  "remoteUser": "vscode"
+}

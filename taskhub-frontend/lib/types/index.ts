@@ -108,7 +108,11 @@ export interface LoginDto {
 }
 
 export interface LoginResponse {
-  access_token: string;
+  success: boolean;
+  message: string;
+  data: {
+    access_token: string;
+  };
 }
 
 export interface JwtPayload {
