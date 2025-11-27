@@ -20,8 +20,8 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin)
+  // @UseGuards(AuthGuard, RolesGuard)
+  // @Roles(Role.Admin)
   @Post('register')
   async register(@Body() account: CreateAccountDto) {
     const result = await this.authService.register(account);

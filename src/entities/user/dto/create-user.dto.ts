@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { Role } from 'src/enums/role.enum';
 import { IsCPF } from 'src/validators/is-cpf.validator';
 
@@ -14,6 +14,7 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Name is required' })
   name: string;
 
-  @IsEnum(Role, { each: true, message: 'Each role must be a valid Role enum value' })
-  roles: Role[];
+  @IsOptional()
+  @IsEnum(Role, { each: true, message: 'Each role must be a valid Role enum value', })
+  roles?: Role[];
 }
