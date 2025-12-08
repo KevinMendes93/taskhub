@@ -1,36 +1,191 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskHub Frontend
 
-## Getting Started
+Frontend do sistema TaskHub - Gerenciador de Tarefas desenvolvido com Next.js 15, React 19 e TypeScript.
 
-First, run the development server:
+## 🚀 Tecnologias
+
+- **Next.js 15** - Framework React com App Router
+- **React 19** - Biblioteca para interfaces de usuário
+- **TypeScript** - Superset JavaScript com tipagem estática
+- **Tailwind CSS** - Framework CSS utility-first
+- **Axios** - Cliente HTTP para requisições à API
+- **js-cookie** - Biblioteca para gerenciamento de cookies
+
+## 📋 Pré-requisitos
+
+- Node.js 18.18 ou superior
+- npm ou yarn
+- Backend TaskHub rodando (http://localhost:3000)
+
+## 🔧 Instalação
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Instalar dependências
+npm install
+
+# Copiar arquivo de ambiente
+cp .env.example .env.local
+
+# Configurar a URL da API no .env.local
+# NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎮 Execução
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Modo desenvolvimento
+npm run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Build para produção
+npm run build
 
-## Learn More
+# Executar versão de produção
+npm start
 
-To learn more about Next.js, take a look at the following resources:
+# Linting
+npm run lint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+O aplicativo estará disponível em [http://localhost:3001](http://localhost:3001)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Estrutura do Projeto
 
-## Deploy on Vercel
+```
+src/
+├── app/                    # App Router do Next.js
+│   ├── layout.tsx         # Layout global
+│   ├── page.tsx           # Página inicial (redirecionamento)
+│   ├── login/             # Página de login
+│   ├── cadastro/          # Página de cadastro
+│   └── principal/         # Dashboard principal
+└── services/              # Serviços da aplicação
+    └── api.ts             # Configuração Axios e serviço de autenticação
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔐 Funcionalidades de Autenticação
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Login
+- Endpoint: `POST /auth/login`
+- Campos: login, password
+- Retorna: access_token (JWT)
+- Token armazenado em cookie com duração de 1 dia
+
+### Cadastro
+- Endpoint: `POST /auth/register`
+- Campos:
+  - login (obrigatório)
+  - password (obrigatório, mínimo 8 caracteres)
+  - user.name (obrigatório)
+  - user.email (obrigatório)
+  - user.cpf (obrigatório, apenas números)
+- Após cadastro, faz login automático
+
+### Logout
+- Remove o cookie de autenticação
+- Redireciona para página de login
+
+## 🎨 Páginas
+
+### Home (/)
+- Redireciona para `/principal` se autenticado
+- Redireciona para `/login` se não autenticado
+
+### Login (/login)
+- Formulário de autenticação
+- Link para página de cadastro
+- Validação de campos
+- Tratamento de erros da API
+
+### Cadastro (/cadastro)
+- Formulário de registro completo
+- Validação de senha (mínimo 8 caracteres)
+- Confirmação de senha
+- Formatação automática de CPF (000.000.000-00)
+- Login automático após cadastro bem-sucedido
+- Link para página de login
+
+### Principal (/principal)
+- Dashboard com estatísticas
+  - Tarefas Pendentes
+  - Tarefas Concluídas
+  - Categorias
+- Ações rápidas
+  - Nova Tarefa
+  - Ver Tarefas
+  - Categorias
+  - Configurações
+- Atividade recente
+- Botão de logout
+- Proteção por autenticação (redirect se não autenticado)
+
+## 🔒 Proteção de Rotas
+
+O sistema implementa proteção de rotas através de:
+
+1. **Interceptor de Requisições**: Adiciona automaticamente o token JWT no header Authorization
+2. **Interceptor de Resposta**: Detecta erros 401 (não autorizado) e redireciona para login
+3. **Verificação Client-Side**: Páginas protegidas verificam autenticação no useEffect
+
+## 🌐 Integração com API
+
+### Configuração Base
+```typescript
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+```
+
+### Serviços Disponíveis
+
+```typescript
+// Login
+authService.login({ login, password })
+
+// Cadastro
+authService.register({ 
+  login, 
+  password, 
+  user: { cpf, email, name } 
+})
+
+// Logout
+authService.logout()
+
+// Verificar autenticação
+authService.isAuthenticated()
+
+// Obter token
+authService.getToken()
+
+// Definir token
+authService.setToken(token)
+```
+
+## 🎯 Próximos Passos
+
+- [ ] Implementar CRUD de Tarefas
+- [ ] Implementar CRUD de Categorias
+- [ ] Adicionar filtros e busca
+- [ ] Implementar paginação
+- [ ] Adicionar notificações/toasts
+- [ ] Implementar tema dark/light
+- [ ] Adicionar testes unitários
+- [ ] Adicionar testes E2E
+
+## 🐛 Solução de Problemas
+
+### Erro de conexão com API
+- Verifique se o backend está rodando na porta 3000
+- Verifique a variável `NEXT_PUBLIC_API_URL` no arquivo `.env.local`
+- Verifique se há CORS habilitado no backend
+
+### Token expirado
+- O sistema detecta automaticamente e redireciona para login
+- Cookie expira em 1 dia
+
+### Erros de validação
+- CPF deve conter apenas números (formatação automática)
+- Senha deve ter no mínimo 8 caracteres
+- Todos os campos do cadastro são obrigatórios
+
+## 📝 Licença
+
+Este projeto foi desenvolvido para fins educacionais.

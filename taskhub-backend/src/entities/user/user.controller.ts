@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,6 +20,8 @@ import { Role } from 'src/enums/role.enum';
 import { RolesGuard } from 'src/security/guards/roles.guard';
 import { ApiResponse } from 'src/common/dto/api-response.dto';
 import { UserResponseDto } from './dto/user-response.dto';
+import { request } from 'http';
+import { Request } from 'express';
 
 @Controller('user')
 @UseGuards(AuthGuard, RolesGuard)
@@ -41,13 +44,22 @@ export class UserController {
     return ApiResponse.success('Users retrieved successfully', users);
   }
 
+  @Get('currentUser')
+  @Roles(Role.User)
+  @HttpCode(HttpStatus.OK)
+  getCurrentUser(@Req() request: any) {
+    const user = this.userService.findCurrentUser(request.user.id);
+    return ApiResponse.success('User retrieved successfully', user);
+  }
+
   @Get(':id')
-  @Roles(Role.Admin, Role.User)
+  @Roles(Role.User, Role.Admin)
   @HttpCode(HttpStatus.OK)
   async findOne(@Param('id') id: string) {
     const user = await this.userService.findOne(+id);
     return ApiResponse.success('User retrieved successfully', user);
   }
+
 
   @Patch(':id')
   @Roles(Role.Admin, Role.User)

@@ -28,6 +28,15 @@ export class UserService {
     return plainToInstance(UserResponseDto, users);
   }
 
+  async findCurrentUser(id: number) {
+    const user: User | null = await this.findUserById(id);
+    if (!user) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    return plainToInstance(UserResponseDto, user);
+  }
+
   async findOne(id: number) {
     const user: User | null = await this.findUserById(id);
     if (!user) {
