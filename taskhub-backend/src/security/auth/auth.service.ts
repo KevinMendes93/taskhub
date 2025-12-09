@@ -34,7 +34,7 @@ export class AuthService {
     };
   }
 
-  async register(account: CreateAccountDto) {
+  async register(account: Partial<CreateAccountDto>) {
     const createdAccount = await this.accountService.createAccount(account);
 
     return plainToInstance(AccountResponseDto, createdAccount);

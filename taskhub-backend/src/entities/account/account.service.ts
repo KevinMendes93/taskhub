@@ -12,7 +12,7 @@ export class AccountService {
     private accountRepository: Repository<Account>,
   ) {}
 
-  async createAccount(createAccountDto: CreateAccountDto) {
+  async createAccount(createAccountDto: Partial<CreateAccountDto>) {
     const hashedPassword = await bcrypt.hash(createAccountDto.password, 10);
 
     const account = this.accountRepository.create({

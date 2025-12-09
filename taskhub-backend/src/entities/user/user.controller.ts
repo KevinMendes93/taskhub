@@ -20,8 +20,6 @@ import { Role } from 'src/enums/role.enum';
 import { RolesGuard } from 'src/security/guards/roles.guard';
 import { ApiResponse } from 'src/common/dto/api-response.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import { request } from 'http';
-import { Request } from 'express';
 
 @Controller('user')
 @UseGuards(AuthGuard, RolesGuard)
@@ -42,14 +40,6 @@ export class UserController {
   async findAll() {
     const users = await this.userService.findAll();
     return ApiResponse.success('Users retrieved successfully', users);
-  }
-
-  @Get('currentUser')
-  @Roles(Role.User)
-  @HttpCode(HttpStatus.OK)
-  getCurrentUser(@Req() request: any) {
-    const user = this.userService.findCurrentUser(request.user.id);
-    return ApiResponse.success('User retrieved successfully', user);
   }
 
   @Get(':id')

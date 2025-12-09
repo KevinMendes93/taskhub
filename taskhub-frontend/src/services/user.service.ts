@@ -1,11 +1,12 @@
 import { api } from '@/config/axios.config';
 import { User } from '@/models/user.model';
 import { ApiResponse } from '@/models/api.model';
+import { authService } from './auth.service';
+import { Role } from '@/app/enums/role.enum';
 
 export const userService = {
-  async getCurrentUser(): Promise<ApiResponse<User>> {
-    const response = await api.get<ApiResponse<User>>('/user/currentUser');
-    console.log('getCurrentUser response:', response.data);
+  async getUsers(): Promise<ApiResponse<User[]>> {
+    const response = await api.get<ApiResponse<User[]>>('/user');
     return response.data;
   },
 
@@ -14,7 +15,12 @@ export const userService = {
     return response.data;
   },
 
-  async updateUser(id: number, data: Partial<User>): Promise<ApiResponse<User>> {
+  async createUser(data: User): Promise<ApiResponse<User>> {
+    const response = await api.post<ApiResponse<User>>(`/user`, data);
+    return response.data;
+  },
+
+  async updateUser(id: number | undefined, data: Partial<User>): Promise<ApiResponse<User>> {
     const response = await api.patch<ApiResponse<User>>(`/user/${id}`, data);
     return response.data;
   },
@@ -23,4 +29,12 @@ export const userService = {
     const response = await api.delete<ApiResponse<void>>(`/user/${id}`);
     return response.data;
   },
+
+  getCurrentUser(): string | null {
+    return authService.getUserLogin();
+  },
+
+  getRolesFromUser(): Role[] | null {
+    return authService.getUserRoles();
+  }
 };

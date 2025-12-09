@@ -3,6 +3,8 @@ import { Role } from 'src/enums/role.enum';
 import { IsCPF } from 'src/validators/is-cpf.validator';
 
 export class CreateUserDto {
+  id?: number;
+
   @IsNotEmpty({ message: 'CPF is required' })
   @IsCPF({ message: 'Invalid CPF' })
   cpf: string;

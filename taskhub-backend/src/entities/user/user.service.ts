@@ -23,18 +23,11 @@ export class UserService {
   }
 
   async findAll() {
-    const users = await this.userRepository.find();
+    const users = await this.userRepository.find({
+      relations: ['account'],
+    });
 
     return plainToInstance(UserResponseDto, users);
-  }
-
-  async findCurrentUser(id: number) {
-    const user: User | null = await this.findUserById(id);
-    if (!user) {
-      throw new NotFoundException(`User not found`);
-    }
-
-    return plainToInstance(UserResponseDto, user);
   }
 
   async findOne(id: number) {
@@ -73,7 +66,10 @@ export class UserService {
   }
 
   private async findUserById(id: number): Promise<User | null> {
-    return await this.userRepository.findOneBy({ id });
+    return await this.userRepository.findOne({ 
+      where: { id },
+      relations: ['account'], 
+    });
   }
 
 }

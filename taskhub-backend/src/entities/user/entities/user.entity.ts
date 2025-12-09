@@ -40,4 +40,9 @@ export class User {
 
   @OneToMany(() => Category, (category) => category.user)
   categories: Category[]
+  
+  
+  public possuiConta(): boolean {
+    return !!this.account;
+  }
 }

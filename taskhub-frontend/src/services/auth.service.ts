@@ -1,7 +1,19 @@
 import Cookies from 'js-cookie';
 import { api } from '@/config/axios.config';
-import { LoginData, RegisterData, LoginResponse } from '@/models/auth.model';
+import { LoginData, RegisterData, LoginResponse, JwtPayload } from '@/models/auth.model';
 import { ApiResponse } from '@/models/api.model';
+import { decodeJwt } from '@/utils/jwt.utils';
+import { Role } from '@/app/enums/role.enum';
+
+const getToken = () => {
+  return Cookies.get('access_token');
+};
+
+const getTokenPayload = (): JwtPayload | null => {
+  const token = getToken();
+  if (!token) return null;
+  return decodeJwt(token);
+};
 
 export const authService = {
   async login(data: LoginData): Promise<ApiResponse<LoginResponse>> {
@@ -19,14 +31,20 @@ export const authService = {
   },
 
   setToken(token: string) {
-    Cookies.set('access_token', token, { expires: 1 }); // expira em 1 dia
-  },
-
-  getToken() {
-    return Cookies.get('access_token');
+    Cookies.set('access_token', token, { expires: 1 });
   },
 
   isAuthenticated() {
-    return !!this.getToken();
+    return !!getToken();
   },
+
+  getUserLogin(): string | null {
+    const payload = getTokenPayload();
+    return payload?.username ?? null;
+  },
+
+  getUserRoles(): Role[] | null {
+    const payload = getTokenPayload();
+    return payload?.roles ?? null;
+  }
 };

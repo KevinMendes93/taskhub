@@ -1,3 +1,5 @@
+import { Role } from "@/app/enums/role.enum";
+
 export interface LoginData {
   login: string;
   password: string;
@@ -15,4 +17,12 @@ export interface RegisterData {
 
 export interface LoginResponse {
   access_token: string;
+}
+
+export interface JwtPayload {
+  sub: number;
+  username: string;
+  roles: Role[];
+  iat?: number;
+  exp?: number;
 }

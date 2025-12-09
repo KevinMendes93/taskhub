@@ -17,7 +17,7 @@ export class AuthController {
 
   @HttpCode(HttpStatus.CREATED)
   @Post('register')
-  async register(@Body() account: CreateAccountDto) {
+  async register(@Body() account: Partial<CreateAccountDto>) {
     const result = await this.authService.register(account);
     return ApiResponse.success('Account created successfully', result);
   }
