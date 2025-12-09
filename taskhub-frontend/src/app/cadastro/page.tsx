@@ -28,11 +28,6 @@ export default function CadastroPage() {
     setFormData((prev) => ({ ...prev, cpf: formatted }));
   };
 
-  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCPF(e.target.value);
-    setFormData((prev) => ({ ...prev, login: formatted }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

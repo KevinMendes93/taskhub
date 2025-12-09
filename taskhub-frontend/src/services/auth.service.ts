@@ -43,6 +43,11 @@ export const authService = {
     return payload?.username ?? null;
   },
 
+  getUserId(): number | null {
+    const payload = getTokenPayload();
+    return payload?.sub ?? null;
+  },
+
   getUserRoles(): Role[] | null {
     const payload = getTokenPayload();
     return payload?.roles ?? null;

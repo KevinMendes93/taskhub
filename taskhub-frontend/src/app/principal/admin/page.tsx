@@ -7,6 +7,7 @@ import { Role } from '@/app/enums/role.enum';
 import { Account, User } from '@/models/user.model';
 import { userService } from '@/services/user.service';
 import { accountService } from '@/services/account.service';
+import { formatCPF, unformatCPF } from '@/utils/validators';
 
 type Tab = 'users' | 'create-user' | 'create-account';
 
@@ -32,6 +33,8 @@ export default function AdminPage() {
     password: '',
     user: undefined,
   });
+
+  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
 
   // Form states - Editar Roles
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -79,6 +82,16 @@ export default function AdminPage() {
     }
   };
 
+  const handleUserSelect = (userId: number) => {
+    const user = users.find(u => u.id === userId);
+    setSelectedUser(user);
+    setAccountForm({
+      ...accountForm,
+      user: user,
+      login: user?.cpf ? formatCPF(user.cpf) : '',
+    });
+  };
+
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -90,10 +103,18 @@ export default function AdminPage() {
     }
 
     try {
-      const response = await accountService.createAccount(accountForm);
+      // Remove formatação do CPF antes de enviar
+      const loginData = {
+        ...accountForm,
+        login: unformatCPF(accountForm.login),
+      };
+
+      const response = await accountService.createAccount(loginData);
       if (response.success) {
         setSuccess('Conta criada com sucesso!');
         setAccountForm({ login: '', password: '', user: undefined });
+        setSelectedUser(undefined);
+        loadUsers();
       } else {
         setError(response.message || 'Erro ao criar conta');
       }
@@ -407,11 +428,7 @@ export default function AdminPage() {
                   </label>
                   <select
                     value={accountForm.user?.id ?? ''}
-                    onChange={e => {
-                        const selectedUser: User | undefined = users.find(user => user.id === Number(e.target.value));
-                        setAccountForm({ ...accountForm, user: selectedUser });
-                        }
-                    }
+                    onChange={e => handleUserSelect(Number(e.target.value))}
                     required
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
                   >
@@ -432,10 +449,11 @@ export default function AdminPage() {
                   <input
                     type="text"
                     value={accountForm.login}
+                    readOnly
                     onChange={e => setAccountForm({ ...accountForm, login: e.target.value })}
                     required
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                    placeholder="Nome de usuário"
+                    placeholder="000.000.000-00"
                   />
                 </div>
                 <div>
