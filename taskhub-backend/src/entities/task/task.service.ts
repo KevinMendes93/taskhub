@@ -24,11 +24,11 @@ export class TaskService {
       throw new NotFoundException(`User with ID ${createTaskDto.user.id} not found`);
     };
 
-    if (this.existsTaskNameInUser(createTaskDto)) {
+    if (await this.existsTaskNameInUser(createTaskDto)) {
       throw new NotFoundException(`Task with name ${createTaskDto.title} already exists for this user`);
     }
 
-    if (!this.existsCategoryInUser(createTaskDto)) {
+    if (await !this.existsCategoryInUser(createTaskDto)) {
       throw new NotFoundException(`This category do not exists in user's categories`);
     }
 
