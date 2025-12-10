@@ -35,8 +35,7 @@ export const userService = {
   },
 
   getCurrentUserId(): number | null {
-    const userIdStr = authService.getUserId();
-    return userIdStr ? Number(userIdStr) : null;
+    return authService.getUserId();
   },
 
   getRolesFromUser(): Role[] | null {

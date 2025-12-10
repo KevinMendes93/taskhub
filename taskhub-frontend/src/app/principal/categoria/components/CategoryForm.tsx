@@ -1,10 +1,12 @@
 'use client';
 
+import { User } from '@/models/user.model';
 import { useState } from 'react';
 
 export interface CategoryFormData {
   name: string;
   description: string;
+  user: User
 }
 
 interface CategoryFormProps {
@@ -16,7 +18,7 @@ interface CategoryFormProps {
 }
 
 export default function CategoryForm({
-  initialData = { name: '', description: '' },
+  initialData = { name: '', description: '', user: {id: undefined} },
   onSubmit,
   onCancel,
   submitButtonText = 'Salvar',

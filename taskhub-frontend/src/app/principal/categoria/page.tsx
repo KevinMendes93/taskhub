@@ -34,11 +34,11 @@ export default function CategoriaPage() {
         return;
       }
 
-      const response = await categoryService.getMyCategories(userId);
+      const response = await categoryService.getCategoriesFromUser(userId);
       if (response.success && response.data) {
         setCategories(response.data);
       }
-    } catch (err) {
+    } catch {
       setError('Erro ao carregar categorias');
     } finally {
       setLoading(false);
@@ -223,7 +223,7 @@ export default function CategoriaPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Tem certeza que deseja excluir a categoria{' '}
               <strong className="text-gray-800 dark:text-gray-200">
-                "{categoryToDelete.name}"
+                {categoryToDelete.name}
               </strong>
               ? Esta ação não pode ser desfeita.
             </p>

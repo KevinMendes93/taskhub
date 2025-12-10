@@ -34,8 +34,6 @@ export default function AdminPage() {
     user: undefined,
   });
 
-  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
-
   // Form states - Editar Roles
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editRoles, setEditRoles] = useState<Role[]>([]);
@@ -55,7 +53,7 @@ export default function AdminPage() {
       if (response.success && response.data) {
         setUsers(response.data);
       }
-    } catch (err) {
+    } catch {
       setError('Erro ao carregar usuários');
     } finally {
       setLoading(false);
@@ -84,7 +82,6 @@ export default function AdminPage() {
 
   const handleUserSelect = (userId: number) => {
     const user = users.find(u => u.id === userId);
-    setSelectedUser(user);
     setAccountForm({
       ...accountForm,
       user: user,
@@ -113,7 +110,6 @@ export default function AdminPage() {
       if (response.success) {
         setSuccess('Conta criada com sucesso!');
         setAccountForm({ login: '', password: '', user: undefined });
-        setSelectedUser(undefined);
         loadUsers();
       } else {
         setError(response.message || 'Erro ao criar conta');

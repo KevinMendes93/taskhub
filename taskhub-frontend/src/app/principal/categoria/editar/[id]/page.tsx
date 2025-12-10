@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { categoryService } from '@/services/category.service';
 import CategoryForm, { CategoryFormData } from '../../components/CategoryForm';
@@ -15,11 +15,7 @@ export default function EditarCategoriaPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadCategory();
-  }, [categoryId]);
-
-  const loadCategory = async () => {
+  const loadCategory = useCallback(async () => {
     try {
       setLoading(true);
       const response = await categoryService.getCategory(categoryId);
@@ -27,16 +23,21 @@ export default function EditarCategoriaPage() {
         setInitialData({
           name: response.data.name,
           description: response.data.description || '',
+          user: {id: response.data.user?.id},
         });
       } else {
         setError('Categoria não encontrada');
       }
-    } catch (err) {
+    } catch {
       setError('Erro ao carregar categoria');
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoryId]);
+
+  useEffect(() => {
+    loadCategory();
+  }, [loadCategory]);
 
   const handleSubmit = async (data: CategoryFormData) => {
     setError('');
@@ -46,6 +47,7 @@ export default function EditarCategoriaPage() {
       const response = await categoryService.updateCategory(categoryId, {
         name: data.name,
         description: data.description || undefined,
+        user: { id: data.user.id }
       });
 
       if (response.success) {
