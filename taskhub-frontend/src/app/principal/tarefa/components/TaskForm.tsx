@@ -1,57 +1,47 @@
 'use client';
 
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Status } from '@/models/task.model';
 import { Category } from '@/models/category.model';
-import { User } from '@/models/user.model';
-import { useState } from 'react';
+import { taskSchema, TaskFormData } from '@/schemas/task.schema';
 
-export interface TaskFormData {
-  title: string;
-  description: string;
-  status: Status;
-  dueDate: string;
-  categoryId: string;
-  user: User;
-}
+export type { TaskFormData };
 
 interface TaskFormProps {
-  initialData?: TaskFormData;
   categories: Category[];
+  submitButtonText: string;
+  isLoading: boolean;
+  defaultValues?: Partial<TaskFormData>;
   onSubmit: (data: TaskFormData) => Promise<void>;
   onCancel: () => void;
-  submitButtonText?: string;
-  isLoading?: boolean;
 }
 
 export default function TaskForm({
-  initialData = { 
-    title: '', 
-    description: '', 
-    status: Status.PENDING, 
-    dueDate: '', 
-    categoryId: '', 
-    user: { id: undefined } 
-  },
   categories,
+  submitButtonText,
+  isLoading,
+  defaultValues,
   onSubmit,
   onCancel,
-  submitButtonText = 'Salvar',
-  isLoading = false,
 }: TaskFormProps) {
-  const [formData, setFormData] = useState<TaskFormData>(initialData);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(formData);
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TaskFormData>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: defaultValues || {
+      title: '',
+      description: '',
+      status: Status.PENDING,
+      dueDate: '',
+      categoryId: '',
+    },
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Título *
@@ -59,18 +49,14 @@ export default function TaskForm({
         <input
           type="text"
           id="title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          required
-          maxLength={100}
+          {...register('title')}
           disabled={isLoading}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="Digite o título da tarefa"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Máximo de 100 caracteres
-        </p>
+        {errors.title && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title.message}</p>
+        )}
       </div>
 
       <div>
@@ -79,19 +65,15 @@ export default function TaskForm({
         </label>
         <textarea
           id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
+          {...register('description')}
           rows={4}
-          maxLength={255}
           disabled={isLoading}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="Digite a descrição da tarefa"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Máximo de 255 caracteres
-        </p>
+        {errors.description && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>
+        )}
       </div>
 
       <div>
@@ -100,10 +82,7 @@ export default function TaskForm({
         </label>
         <select
           id="categoryId"
-          name="categoryId"
-          value={formData.categoryId}
-          onChange={handleChange}
-          required
+          {...register('categoryId')}
           disabled={isLoading}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -114,18 +93,18 @@ export default function TaskForm({
             </option>
           ))}
         </select>
-      </div>
-
-      <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          {errors.categoryId && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.categoryId.message}</p>
+          )}
+        </div>
+  
+        <div>
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Status *
         </label>
         <select
           id="status"
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          required
+          {...register('status')}
           disabled={isLoading}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -133,6 +112,9 @@ export default function TaskForm({
           <option value={Status.IN_PROGRESS}>Em Progresso</option>
           <option value={Status.COMPLETED}>Concluída</option>
         </select>
+        {errors.status && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.status.message}</p>
+        )}
       </div>
 
       <div>
@@ -142,12 +124,13 @@ export default function TaskForm({
         <input
           type="date"
           id="dueDate"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
+          {...register('dueDate')}
           disabled={isLoading}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         />
+        {errors.dueDate && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.dueDate.message}</p>
+        )}
       </div>
 
       <div className="flex gap-3 pt-4">
@@ -164,7 +147,7 @@ export default function TaskForm({
           disabled={isLoading}
           className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Salvando...' : submitButtonText}
+          {isLoading ? 'Processando...' : submitButtonText}
         </button>
       </div>
     </form>

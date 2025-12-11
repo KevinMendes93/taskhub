@@ -2,53 +2,51 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { authService } from '@/services/auth.service';
-import { formatCPF, unformatCPF, validateCadastroForm } from '@/utils/validators';
+import { registerSchema, RegisterFormData } from '@/schemas/auth.schema';
+import { formatCPF, unformatCPF } from '@/utils/validators';
 
 export default function CadastroPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: '',
-    name: '',
-    email: '',
-    cpf: '',
-  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      cpf: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCPF(e.target.value);
-    setFormData((prev) => ({ ...prev, cpf: formatted }));
+    setValue('cpf', formatted, { shouldValidate: true });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: RegisterFormData) => {
     setError('');
-
-    // Validação do formulário
-    const validation = validateCadastroForm(formData);
-    if (!validation.isValid) {
-      setError(validation.error || 'Erro de validação');
-      return;
-    }
-
     setLoading(true);
 
     try {
       const registerData = {
-        login: unformatCPF(formData.cpf),
-        password: formData.password,
+        login: unformatCPF(data.cpf),
+        password: data.password,
         user: {
-          cpf: unformatCPF(formData.cpf),
-          email: formData.email,
-          name: formData.name,
+          cpf: unformatCPF(data.cpf),
+          email: data.email,
+          name: data.name,
         },
       };
 
@@ -57,8 +55,8 @@ export default function CadastroPage() {
       if (response.success) {
         // Após cadastro bem-sucedido, faz login automaticamente
         const loginResponse = await authService.login({
-          login: unformatCPF(formData.cpf),
-          password: formData.password,
+          login: unformatCPF(data.cpf),
+          password: data.password,
         });
 
         if (loginResponse.success && loginResponse.data?.access_token) {
@@ -98,7 +96,7 @@ export default function CadastroPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Nome Completo
@@ -106,13 +104,14 @@ export default function CadastroPage() {
             <input
               type="text"
               id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+              {...register('name')}
+              disabled={loading}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Digite seu nome completo"
             />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>
+            )}
           </div>
 
           <div>
@@ -122,13 +121,14 @@ export default function CadastroPage() {
             <input
               type="email"
               id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+              {...register('email')}
+              disabled={loading}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Digite seu e-mail"
             />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
+            )}
           </div>
 
           <div>
@@ -138,14 +138,16 @@ export default function CadastroPage() {
             <input
               type="text"
               id="cpf"
-              name="cpf"
-              value={formData.cpf}
+              {...register('cpf')}
               onChange={handleCPFChange}
-              required
               maxLength={14}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+              disabled={loading}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="000.000.000-00"
             />
+            {errors.cpf && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.cpf.message}</p>
+            )}
           </div>
 
           <div>
@@ -155,13 +157,14 @@ export default function CadastroPage() {
             <input
               type="password"
               id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-              placeholder="Mínimo 8 caracteres"
+              {...register('password')}
+              disabled={loading}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Mínimo 6 caracteres"
             />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>
+            )}
           </div>
 
           <div>
@@ -171,13 +174,14 @@ export default function CadastroPage() {
             <input
               type="password"
               id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+              {...register('confirmPassword')}
+              disabled={loading}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="Confirme sua senha"
             />
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.confirmPassword.message}</p>
+            )}
           </div>
 
           <button

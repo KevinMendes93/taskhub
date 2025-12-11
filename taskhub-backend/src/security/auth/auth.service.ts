@@ -23,7 +23,7 @@ export class AuthService {
     if (!isMatch) throw new UnauthorizedException("User or Password don't match");
 
     const payload = {
-      sub: account.id,
+      sub: account.user.id,
       username: account.user.name,
       email: account.user.email,
       roles: account.user.roles

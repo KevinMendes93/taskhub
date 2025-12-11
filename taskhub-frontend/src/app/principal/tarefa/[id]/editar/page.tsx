@@ -62,7 +62,6 @@ export default function EditarTaskPage() {
         status: task.status,
         dueDate: formattedDate,
         categoryId: task.category?.id?.toString() || '',
-        user: { id: userId },
       });
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Erro ao carregar tarefa');
@@ -152,7 +151,7 @@ export default function EditarTaskPage() {
           )}
 
           <TaskForm
-            initialData={initialData}
+            defaultValues={initialData}
             categories={categories}
             onSubmit={handleSubmit}
             onCancel={handleCancel}

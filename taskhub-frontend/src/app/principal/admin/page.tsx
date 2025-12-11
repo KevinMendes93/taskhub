@@ -4,10 +4,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { Role } from '@/app/enums/role.enum';
-import { Account, User } from '@/models/user.model';
+import { User } from '@/models/user.model';
 import { userService } from '@/services/user.service';
 import { accountService } from '@/services/account.service';
-import { formatCPF, unformatCPF } from '@/utils/validators';
+import { unformatCPF } from '@/utils/validators';
+import AdminCreateUserForm from './components/AdminCreateUserForm';
+import { CreateUserFormData, CreateAccountFormData } from '@/schemas/user.schema';
+import AdminCreateAccountForm from './components/AdminCreateAccountForm';
 
 type Tab = 'users' | 'create-user' | 'create-account';
 
@@ -19,20 +22,9 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Form states - Criar Usuário
-  const [userForm, setUserForm] = useState<User>({
-    cpf: '',
-    email: '',
-    name: '',
-    roles: [Role.User],
-  });
-
-  // Form states - Criar Conta
-  const [accountForm, setAccountForm] = useState<Account>({
-    login: '',
-    password: '',
-    user: undefined,
-  });
+  // Loading states
+  const [loadingUser, setLoadingUser] = useState(false);
+  const [loadingAccount, setLoadingAccount] = useState(false);
 
   // Form states - Editar Roles
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -60,16 +52,21 @@ export default function AdminPage() {
     }
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateUser = async (data: CreateUserFormData) => {
     setError('');
     setSuccess('');
+    setLoadingUser(true);
 
     try {
-      const response = await userService.createUser(userForm);
+      // Remove formatação do CPF antes de enviar
+      const userData = {
+        ...data,
+        cpf: unformatCPF(data.cpf),
+      };
+      
+      const response = await userService.createUser(userData);
       if (response.success) {
         setSuccess('Usuário criado com sucesso!');
-        setUserForm({ cpf: '', email: '', name: '', roles: [Role.User] });
         loadUsers();
       } else {
         setError(response.message || 'Erro ao criar usuário');
@@ -77,39 +74,35 @@ export default function AdminPage() {
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || 'Erro ao criar usuário');
+    } finally {
+      setLoadingUser(false);
     }
   };
 
-  const handleUserSelect = (userId: number) => {
-    const user = users.find(u => u.id === userId);
-    setAccountForm({
-      ...accountForm,
-      user: user,
-      login: user?.cpf ? formatCPF(user.cpf) : '',
-    });
-  };
-
-  const handleCreateAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateAccount = async (data: CreateAccountFormData) => {
     setError('');
     setSuccess('');
+    setLoadingAccount(true);
 
-    if (!accountForm.user) {
-      setError('Selecione um usuário');
+    // Encontrar o usuário selecionado
+    const selectedUser = users.find(u => u.id === data.userId);
+    if (!selectedUser) {
+      setError('Usuário não encontrado');
+      setLoadingAccount(false);
       return;
     }
 
     try {
-      // Remove formatação do CPF antes de enviar
-      const loginData = {
-        ...accountForm,
-        login: unformatCPF(accountForm.login),
+      // Criar payload com o objeto user completo e CPF sem formatação
+      const accountData = {
+        login: unformatCPF(selectedUser.cpf!),
+        password: data.password,
+        user: selectedUser,
       };
 
-      const response = await accountService.createAccount(loginData);
+      const response = await accountService.createAccount(accountData);
       if (response.success) {
         setSuccess('Conta criada com sucesso!');
-        setAccountForm({ login: '', password: '', user: undefined });
         loadUsers();
       } else {
         setError(response.message || 'Erro ao criar conta');
@@ -117,6 +110,8 @@ export default function AdminPage() {
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || 'Erro ao criar conta');
+    } finally {
+      setLoadingAccount(false);
     }
   };
 
@@ -145,19 +140,10 @@ export default function AdminPage() {
     setEditRoles(user.roles || []);
   };
 
-  const toggleRole = (role: Role, checked: boolean, isEdit: boolean = false) => {
-    if (isEdit) {
-      setEditRoles(prev =>
-        checked ? [...prev, role] : prev.filter(r => r !== role)
-      );
-    } else {
-      setUserForm(prev => ({
-        ...prev,
-        roles: checked
-          ? [...(prev.roles || []), role]
-          : (prev.roles || []).filter(r => r !== role),
-      }));
-    }
+  const toggleEditRole = (role: Role, checked: boolean) => {
+    setEditRoles(prev =>
+      checked ? [...prev, role] : prev.filter(r => r !== role)
+    );
   };
 
   if (loading) {
@@ -332,146 +318,30 @@ export default function AdminPage() {
 
           {/* Tab: Criar Usuário */}
           {activeTab === 'create-user' && (
-            <div>
+            <div className='flex flex-col items-center'>
               <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
                 Criar Novo Usuário
               </h2>
-              <form onSubmit={handleCreateUser} className="space-y-4 max-w-md">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nome
-                  </label>
-                  <input
-                    type="text"
-                    value={userForm.name}
-                    onChange={e => setUserForm({ ...userForm, name: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                    placeholder="Nome completo"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={userForm.email}
-                    onChange={e => setUserForm({ ...userForm, email: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                    placeholder="email@exemplo.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    CPF
-                  </label>
-                  <input
-                    type="text"
-                    value={userForm.cpf}
-                    onChange={e => setUserForm({ ...userForm, cpf: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                    placeholder="000.000.000-00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Roles
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={userForm.roles?.includes(Role.User)}
-                        onChange={e => toggleRole(Role.User, e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
-                      />
-                      User
-                    </label>
-                    <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={userForm.roles?.includes(Role.Admin)}
-                        onChange={e => toggleRole(Role.Admin, e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
-                      />
-                      Admin
-                    </label>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold rounded-lg transition"
-                >
-                  Criar Usuário
-                </button>
-              </form>
+              <AdminCreateUserForm
+                onSubmit={handleCreateUser}
+                isLoading={loadingUser}
+                submitButtonText="Criar Usuário"
+              />
             </div>
           )}
 
           {/* Tab: Criar Conta */}
           {activeTab === 'create-account' && (
-            <div>
+            <div className='flex flex-col items-center'>
               <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
                 Criar Nova Conta
               </h2>
-              <form onSubmit={handleCreateAccount} className="space-y-4 max-w-md">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Selecionar Usuário
-                  </label>
-                  <select
-                    value={accountForm.user?.id ?? ''}
-                    onChange={e => handleUserSelect(Number(e.target.value))}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                  >
-                    <option value={0}>Selecione um usuário...</option>
-                    {users
-                    .filter(user => !user.possuiConta)
-                    .map(user => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} - {user.email}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Login
-                  </label>
-                  <input
-                    type="text"
-                    value={accountForm.login}
-                    readOnly
-                    onChange={e => setAccountForm({ ...accountForm, login: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                    placeholder="000.000.000-00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Senha
-                  </label>
-                  <input
-                    type="password"
-                    value={accountForm.password}
-                    onChange={e => setAccountForm({ ...accountForm, password: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                    placeholder="Senha forte"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-semibold rounded-lg transition"
-                >
-                  Criar Conta
-                </button>
-              </form>
+              <AdminCreateAccountForm
+                users={users.filter(user => !user.possuiConta)}
+                onSubmit={handleCreateAccount}
+                isLoading={loadingAccount}
+                submitButtonText="Criar Conta"
+              />
             </div>
           )}
         </div>
@@ -488,7 +358,7 @@ export default function AdminPage() {
                   <input
                     type="checkbox"
                     checked={editRoles.includes(Role.User)}
-                    onChange={e => toggleRole(Role.User, e.target.checked, true)}
+                    onChange={e => toggleEditRole(Role.User, e.target.checked)}
                     className="w-5 h-5 rounded border-gray-300 dark:border-gray-600"
                   />
                   <span>User</span>
@@ -497,7 +367,7 @@ export default function AdminPage() {
                   <input
                     type="checkbox"
                     checked={editRoles.includes(Role.Admin)}
-                    onChange={e => toggleRole(Role.Admin, e.target.checked, true)}
+                    onChange={e => toggleEditRole(Role.Admin, e.target.checked)}
                     className="w-5 h-5 rounded border-gray-300 dark:border-gray-600"
                   />
                   <span>Admin</span>

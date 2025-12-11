@@ -23,7 +23,6 @@ export default function EditarCategoriaPage() {
         setInitialData({
           name: response.data.name,
           description: response.data.description || '',
-          user: {id: response.data.user?.id},
         });
       } else {
         setError('Categoria não encontrada');
@@ -47,7 +46,6 @@ export default function EditarCategoriaPage() {
       const response = await categoryService.updateCategory(categoryId, {
         name: data.name,
         description: data.description || undefined,
-        user: { id: data.user.id }
       });
 
       if (response.success) {
@@ -109,7 +107,7 @@ export default function EditarCategoriaPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
           {initialData && (
             <CategoryForm
-              initialData={initialData}
+              defaultValues={initialData}
               onSubmit={handleSubmit}
               onCancel={handleCancel}
               submitButtonText="Salvar Alterações"
