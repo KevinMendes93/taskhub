@@ -18,9 +18,24 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const clean = (url?: string) => url?.replace(/\/$/, '');
+  const allowedOrigins = [
+    clean(process.env.FRONTEND_URL),
+    clean('http://localhost:3000'),
+  ].filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const o = origin.replace(/\/$/, '');
+      if (allowedOrigins.includes(o)) return callback(null, true);
+      return callback(new Error(`CORS bloqueado para origem: ${origin}`));
+    },
     credentials: true,
+    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400,
   });
 
   await app.listen(process.env.PORT ?? 3001);
