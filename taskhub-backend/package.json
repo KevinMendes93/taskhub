@@ -24,7 +24,7 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
-    "typeorm:prod": "node --require ts-node/register ./node_modules/typeorm/cli.js -d dist/data-source.js",
+    "typeorm:prod": "node --require ts-node/register ./node_modules/typeorm/cli.js -d dist/src/data-source.js",
     "migration:run:prod": "npm run typeorm:prod -- migration:run"
   },
   "dependencies": {
