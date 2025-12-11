@@ -25,9 +25,26 @@ export const createNestServer = async (expressInstance: express.Express) => {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const allowedOrigins = [
+    process.env.FRONTEND_URL?.replace(/\/$/, ''), // sem barra final
+    'http://localhost:3000',
+  ].filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Permite requests sem origin (ex: mesmo host) e preflight
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/$/, '');
+      if (allowedOrigins.includes(cleanOrigin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
+    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
+    maxAge: 86400,
   });
 
   await app.init();
