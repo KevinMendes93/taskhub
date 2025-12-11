@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { userService } from '@/services/user.service';
@@ -10,7 +10,7 @@ import { Task, Status, TaskFilters } from '@/models/task.model';
 import { Category } from '@/models/category.model';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 
-export default function TarefasPage() {
+function TarefasPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -479,5 +479,17 @@ export default function TarefasPage() {
         itemType="tarefa"
       />
     </div>
+  );
+}
+
+export default function TarefasPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <TarefasPageContent />
+    </Suspense>
   );
 }

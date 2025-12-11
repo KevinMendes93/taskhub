@@ -17,6 +17,6 @@
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
   },
-  "postCreateCommand": "bash -i -l -c 'nvm install 18.20.8 && nvm use 18.20.8' && npm install -g @nestjs/cli",
+  "postCreateCommand": "bash -i -l -c 'nvm install 20.19.1 && nvm use 20.19.1' && npm install -g @nestjs/cli",
   "remoteUser": "vscode"
 }
