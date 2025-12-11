@@ -24,10 +24,30 @@ export class AccountService {
     return await this.accountRepository.save(account);
   }
 
-  findOne(login: string): Promise<Account | undefined> {
+  async findOne(login: string): Promise<Account | undefined> {
     return this.accountRepository.findOne({
       where: { login },
       relations: ['user'],
+    });
+  }
+
+  async findById(id: number): Promise<Account | undefined> {
+    return this.accountRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+  }
+
+  async setRefreshToken(accountId: number, refreshToken: string) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.accountRepository.update(accountId, {
+      refreshTokenHash: hashedRefreshToken,
+    });
+  }
+
+  async clearRefreshToken(accountId: number) {
+    await this.accountRepository.update(accountId, {
+      refreshTokenHash: null,
     });
   }
 }

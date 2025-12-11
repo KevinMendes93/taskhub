@@ -26,8 +26,14 @@ export const authService = {
     return response.data;
   },
 
-  logout() {
-    Cookies.remove('access_token');
+  async logout() {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Erro ao fazer logout no backend:', error);
+    } finally {
+      Cookies.remove('access_token');
+    }
   },
 
   setToken(token: string) {

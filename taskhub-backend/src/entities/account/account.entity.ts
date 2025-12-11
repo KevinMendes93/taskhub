@@ -20,6 +20,9 @@ export class Account {
   @Column()
   password: string;
 
+  @Column({ nullable: true })
+  refreshTokenHash: string;
+
   @OneToOne(() => User, (user) => user.account, {
     cascade: true,
     onDelete: 'CASCADE',
