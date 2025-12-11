@@ -27,4 +27,9 @@ export const categoryService = {
     const response = await api.delete<ApiResponse<null>>(`/category/${id}`);
     return response.data;
   },
+
+  async countCategoriesByUser(userId: number): Promise<number> {
+    const response = await api.get<ApiResponse<number>>(`/category/user/${userId}/count`);
+    return response.data.data || 0;
+  }
 };

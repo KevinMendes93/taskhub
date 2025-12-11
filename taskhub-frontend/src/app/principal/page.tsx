@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { userService } from '@/services/user.service';
 import { Role } from '../enums/role.enum';
+import { taskService } from '@/services/task.service';
+import { CountTaskDto, Task } from '@/models/task.model';
+import { categoryService } from '@/services/category.service';
 
 export default function PrincipalPage() {
   const router = useRouter();
@@ -13,16 +16,41 @@ export default function PrincipalPage() {
   const [roles, setRoles] = useState<Role[] | null>(null);
   const [error] = useState('');
 
+  const [tasks, setTasks] = useState<Task[] | null>(null);
+  const [tasksCount, setTasksCount] = useState<CountTaskDto | null>(null);
+  const [categoriesCount, setCategoriesCount] = useState(0);
+
   useEffect(() => {
     // Verifica se o usuário está autenticado
     if (!authService.isAuthenticated()) {
       router.push('/login');
       return;
     }
+    const loadData = async () => {
+      setUser(userService.getCurrentUser());
+      setRoles(userService.getRolesFromUser());
 
-    setUser(userService.getCurrentUser());
-    setRoles(userService.getRolesFromUser());
-    setLoading(false);
+      const userId = userService.getCurrentUserId();
+      if (userId) {
+        try {
+          const [tasksCount, categoriesCount, tasks] = await Promise.all([
+            taskService.countTasksByStatus(userId),
+            categoryService.countCategoriesByUser(userId),
+            taskService.getTasksFromUser(userId)
+          ]);
+          
+          setTasks(tasks.data || []);
+          setTasksCount(tasksCount);
+          setCategoriesCount(categoriesCount);
+        } catch (error) {
+          console.error('Erro ao carregar dados:', error);
+        }
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
   }, [router]);
 
   const handleLogout = () => {
@@ -86,12 +114,13 @@ export default function PrincipalPage() {
 
         {/* Dashboard Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
           {/* Card - Tarefas Pendentes */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Tarefas Pendentes</p>
-                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">0</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">{tasksCount?.pending || 0}</p>
               </div>
               <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
                 <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +135,7 @@ export default function PrincipalPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Tarefas Concluídas</p>
-                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">0</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">{tasksCount?.completed || 0}</p>
               </div>
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
                 <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +150,7 @@ export default function PrincipalPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Categorias</p>
-                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">0</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-1">{categoriesCount || 0}</p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
                 <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,11 +203,40 @@ export default function PrincipalPage() {
           <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Atividade Recente</h3>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-              <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-              <p>Nenhuma atividade recente</p>
-              <p className="text-sm mt-1">Comece criando sua primeira tarefa!</p>
+                {tasks && tasks.length > 0 ? (
+                <div className="space-y-3">
+                  {tasks.slice(0, 5).map((task) => (
+                  <div 
+                    key={task.id} 
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer"
+                    onClick={() => router.push(`/principal/tarefa/${task.id}`)}
+                  >
+                    <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${task.status === 'COMPLETED' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                    <div>
+                      <p className="font-medium text-gray-800 dark:text-gray-100">{task.title}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{task.description}</p>
+                    </div>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                    task.status === 'COMPLETED' 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                    }`}>
+                    {task.status === 'COMPLETED' ? 'Concluída' : 'Pendente'}
+                    </span>
+                  </div>
+                  ))}
+                </div>
+                ) : (
+                <>
+                  <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  <p>Nenhuma atividade recente</p>
+                  <p className="text-sm mt-1">Comece criando sua primeira tarefa!</p>
+                </>
+                )}
             </div>
           </div>
         </div>

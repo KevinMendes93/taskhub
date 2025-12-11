@@ -22,7 +22,7 @@ export class Task {
   })
   status: Status;
 
-  @Column({ name: 'due_date', type: 'timestamp', nullable: true })
+  @Column({ name: 'due_date', type: 'date', nullable: true })
   dueDate: Date;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })

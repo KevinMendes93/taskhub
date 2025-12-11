@@ -1,18 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { categoryService } from '@/services/category.service';
 import { userService } from '@/services/user.service';
 import { Category } from '@/models/category.model';
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 
 export default function CategoriaPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
@@ -21,8 +24,21 @@ export default function CategoriaPage() {
       router.push('/login');
       return;
     }
+
+    // Captura mensagem de sucesso dos query params
+    const message = searchParams.get('success');
+    if (message) {
+      setSuccessMessage(message);
+      // Remove a mensagem após 3 segundos
+      setTimeout(() => {
+        setSuccessMessage('');
+        // Limpa os query params da URL
+        router.replace('/principal/categoria');
+      }, 3000);
+    }
+
     loadCategories();
-  }, [router]);
+  }, [router, searchParams]);
 
   const loadCategories = async () => {
     try {
@@ -51,7 +67,7 @@ export default function CategoriaPage() {
     try {
       setError('');
       setSuccess('');
-      await categoryService.deleteCategory(categoryToDelete.id);
+      await categoryService.deleteCategory(categoryToDelete.id!);
       setSuccess('Categoria excluída com sucesso!');
       setShowDeleteModal(false);
       setCategoryToDelete(null);
@@ -96,6 +112,17 @@ export default function CategoriaPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Mensagens */}
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 rounded-lg text-sm flex items-center justify-between animate-fade-in">
+            <span>{successMessage}</span>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="ml-4 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {error && (
           <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg text-sm">
             {error}
@@ -207,46 +234,16 @@ export default function CategoriaPage() {
       </main>
 
       {/* Modal de Confirmação de Exclusão */}
-      {showDeleteModal && categoryToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                Confirmar Exclusão
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Tem certeza que deseja excluir a categoria{' '}
-              <strong className="text-gray-800 dark:text-gray-200">
-                {categoryToDelete.name}
-              </strong>
-              ? Esta ação não pode ser desfeita.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setCategoryToDelete(null);
-                }}
-                className="flex-1 py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setCategoryToDelete(null);
+        }}
+        onConfirm={handleDelete}
+        itemName={categoryToDelete?.name || ''}
+        itemType="categoria"
+      />
     </div>
   );
 }

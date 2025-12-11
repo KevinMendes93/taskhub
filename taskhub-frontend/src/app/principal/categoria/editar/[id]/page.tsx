@@ -51,7 +51,7 @@ export default function EditarCategoriaPage() {
       });
 
       if (response.success) {
-        router.push('/principal/categoria');
+        router.push('/principal/categoria?success=Categoria atualizada com sucesso!');
       } else {
         setError(response.message || 'Erro ao atualizar categoria');
       }

@@ -1,21 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { userService } from '@/services/user.service';
 import { taskService } from '@/services/task.service';
 import { categoryService } from '@/services/category.service';
 import { Task, Status, TaskFilters } from '@/models/task.model';
 import { Category } from '@/models/category.model';
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 
 export default function TarefasPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   const [filters, setFilters] = useState<TaskFilters>({
     search: '',
@@ -31,8 +37,20 @@ export default function TarefasPage() {
       return;
     }
 
+    // Captura mensagem de sucesso dos query params
+    const message = searchParams.get('success');
+    if (message) {
+      setSuccessMessage(message);
+      // Remove a mensagem após 3 segundos
+      setTimeout(() => {
+        setSuccessMessage('');
+        // Limpa os query params da URL
+        router.replace('/principal/tarefa');
+      }, 2000);
+    }
+
     loadData();
-  }, [router]);
+  }, [router, searchParams]);
 
   useEffect(() => {
     applyFilters();
@@ -116,12 +134,19 @@ export default function TarefasPage() {
     });
   };
 
-  const handleDeleteTask = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+  const openDeleteModal = (task: Task) => {
+    setTaskToDelete(task);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteTask = async () => {
+    if (!taskToDelete) return;
 
     try {
-      await taskService.deleteTask(id);
-      setTasks(tasks.filter((task) => task.id !== id));
+      await taskService.deleteTask(taskToDelete.id!);
+      setTasks(tasks.filter((task) => task.id !== taskToDelete.id));
+      setShowDeleteModal(false);
+      setTaskToDelete(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao excluir tarefa');
     }
@@ -159,8 +184,6 @@ export default function TarefasPage() {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -205,6 +228,18 @@ export default function TarefasPage() {
             {filteredTasks.length} {filteredTasks.length === 1 ? 'tarefa encontrada' : 'tarefas encontradas'}
           </p>
         </div>
+
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 rounded-lg text-sm flex items-center justify-between animate-fade-in">
+            <span>{successMessage}</span>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="ml-4 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg text-sm">
@@ -393,7 +428,7 @@ export default function TarefasPage() {
                       </svg>
                     </button>
                     <button
-                      onClick={() => handleDeleteTask(task.id!)}
+                      onClick={() => openDeleteModal(task)}
                       className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                       title="Excluir"
                     >
@@ -413,6 +448,16 @@ export default function TarefasPage() {
           </div>
         )}
       </main>
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setTaskToDelete(null);
+        }}
+        onConfirm={handleDeleteTask}
+        itemName={taskToDelete?.title || ''}
+        itemType="tarefa"
+      />
     </div>
   );
 }

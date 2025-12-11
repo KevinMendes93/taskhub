@@ -15,6 +15,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { ApiResponse } from 'src/common/dto/api-response.dto';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/enums/role.enum';
+import { CountTaskDto } from './dto/count-task.dto';
 
 @Controller('task')
 export class TaskController {
@@ -61,5 +62,12 @@ export class TaskController {
   async remove(@Param('id') id: string) {
     await this.taskService.remove(+id);
     return ApiResponse.success('Task deleted successfully', null);
+  }
+
+  @Get('user/:id/count-by-status')
+  @HttpCode(HttpStatus.OK)
+  async countTasksByStatus(@Param('id') id: string): Promise<ApiResponse<CountTaskDto>> {
+    const count = await this.taskService.countTasksByStatus(+id);
+    return ApiResponse.success('Task count by status retrieved successfully', count);
   }
 }

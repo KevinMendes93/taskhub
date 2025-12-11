@@ -1,6 +1,6 @@
 import { api } from '@/config/axios.config';
 import { ApiResponse } from '@/models/api.model';
-import { Task, CreateTaskDto, TaskFilters } from '@/models/task.model';
+import { Task, CreateTaskDto, TaskFilters, CountTaskDto } from '@/models/task.model';
 
 export const taskService = {
   async getTasksFromUser(userId: number, filters?: TaskFilters): Promise<ApiResponse<Task[]>> {
@@ -45,5 +45,13 @@ export const taskService = {
   async deleteTask(id: number): Promise<ApiResponse<null>> {
     const response = await api.delete<ApiResponse<null>>(`/task/${id}`);
     return response.data;
+  },
+
+  async countTasksByStatus(userId: number): Promise<CountTaskDto> {
+    const response = await api.get<ApiResponse<CountTaskDto>>(`/task/user/${userId}/count-by-status`);
+    console.log('countTasksByStatus response:', response);
+    const pending = response.data.data?.pending;
+    const completed = response.data.data?.completed;
+    return { pending, completed };
   },
 };

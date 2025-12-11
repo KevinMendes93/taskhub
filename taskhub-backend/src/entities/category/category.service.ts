@@ -12,7 +12,6 @@ import { CreateTaskDto } from '../task/dto/create-task.dto';
 
 @Injectable()
 export class CategoryService {
-
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
@@ -113,5 +112,10 @@ export class CategoryService {
 
   async existsCategoryInUser(dto: CreateTaskDto) {
     return await this.categoryRepository.existsBy({ user: { id: dto.user.id }, id: dto.category.id });
+  }
+
+  async countCategoriesByUser(userId: number): Promise<number> {
+    const count = await this.categoryRepository.count({ where: { user: { id: userId } } });
+    return count;
   }
 }

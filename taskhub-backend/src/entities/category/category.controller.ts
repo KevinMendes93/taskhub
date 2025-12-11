@@ -73,4 +73,12 @@ export class CategoryController {
   async remove(@Param('id') id: string) {
     await this.categoryService.remove(+id);
   }
+
+  @Get('user/:id/count')
+  @Roles(Role.User)
+  @HttpCode(HttpStatus.OK)
+  async countCategoriesByUser(@Param('id') id: string) {
+    const count = await this.categoryService.countCategoriesByUser(+id);
+    return ApiResponse.success('Category count retrieved successfully', count);
+  }
 }

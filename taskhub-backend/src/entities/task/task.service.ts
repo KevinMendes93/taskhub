@@ -8,6 +8,7 @@ import { TaskResponseDto } from './dto/task-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { UserService } from '../user/user.service';
 import { CategoryService } from '../category/category.service';
+import { Status } from 'src/enums/status.enum';
 
 @Injectable()
 export class TaskService {
@@ -51,7 +52,7 @@ export class TaskService {
 
     const tasks = await this.taskRepository.find({ 
       where: { user: { id: userId } },
-      relations: ['user']
+      relations: ['user', 'category']
     });
 
     return plainToInstance(TaskResponseDto, tasks);
@@ -85,6 +86,18 @@ export class TaskService {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
     await this.taskRepository.delete(id);
+  }
+
+  async countTasksByStatus(userId: number) {
+    const userExists = await this.userService.userExists(userId);
+    if (!userExists) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const pendingCount = await this.taskRepository.count({ where: { user: { id: userId }, status: Status.PENDING } });
+    const completedCount = await this.taskRepository.count({ where: { user: { id: userId }, status: Status.COMPLETED } });
+
+    return { pending: pendingCount, completed: completedCount };
   }
 
   private async taskExists(id: number): Promise<Boolean> {

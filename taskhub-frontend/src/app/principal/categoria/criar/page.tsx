@@ -22,7 +22,7 @@ export default function CriarCategoriaPage() {
         setError('Usuário não encontrado');
         return;
       }
-
+      
       const response = await categoryService.createCategory({
         name: data.name,
         description: data.description || undefined,
@@ -30,7 +30,7 @@ export default function CriarCategoriaPage() {
       });
 
       if (response.success) {
-        router.push('/principal/categoria');
+        router.push('/principal/categoria?success=Categoria criada com sucesso!');
       } else {
         setError(response.message || 'Erro ao criar categoria');
       }

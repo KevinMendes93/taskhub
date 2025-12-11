@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsEmpty, IsEnum, IsNotEmpty, ValidateNested } from "class-validator";
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, ValidateNested } from "class-validator";
 import { CategoryReferenceDto } from "src/entities/category/dto/category-reference.dto";
 import { UserReferenceDto } from "src/entities/user/dto/user-reference.dto";
 import { Status } from "src/enums/status.enum";
@@ -15,7 +15,8 @@ export class CreateTaskDto {
     @IsEnum(Status, { message: 'Status must be a valid enum value' })
     status: Status;
 
-    @IsEmpty({ message: 'DueDate must be empty or a valid date' })
+    @IsOptional()
+    @IsDateString({}, { message: 'DueDate must be a valid date string (YYYY-MM-DD)' })
     dueDate?: Date;
 
     @ValidateNested()

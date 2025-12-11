@@ -35,3 +35,8 @@ export interface TaskFilters {
   dueDateFrom?: string;
   dueDateTo?: string;
 }
+
+export interface CountTaskDto {
+  pending?: number;
+  completed?: number;
+}

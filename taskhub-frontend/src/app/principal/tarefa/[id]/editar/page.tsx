@@ -6,8 +6,9 @@ import { authService } from '@/services/auth.service';
 import { userService } from '@/services/user.service';
 import { taskService } from '@/services/task.service';
 import { categoryService } from '@/services/category.service';
-import { Status, CreateTaskDto, Task } from '@/models/task.model';
+import { CreateTaskDto } from '@/models/task.model';
 import { Category } from '@/models/category.model';
+import TaskForm, { TaskFormData } from '../../components/TaskForm';
 
 export default function EditarTaskPage() {
   const router = useRouter();
@@ -18,15 +19,7 @@ export default function EditarTaskPage() {
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: Status.PENDING,
-    dueDate: '',
-    categoryId: '',
-  });
+  const [initialData, setInitialData] = useState<TaskFormData | undefined>();
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -56,19 +49,20 @@ export default function EditarTaskPage() {
 
       setCategories(categoriesResponse.data || []);
 
-      // Formatar a data para datetime-local input
+      // Formatar a data para date input (YYYY-MM-DD)
       let formattedDate = '';
       if (task.dueDate) {
         const date = new Date(task.dueDate);
-        formattedDate = date.toISOString().slice(0, 16);
+        formattedDate = date.toISOString().split('T')[0];
       }
 
-      setFormData({
+      setInitialData({
         title: task.title,
         description: task.description,
         status: task.status,
         dueDate: formattedDate,
         categoryId: task.category?.id?.toString() || '',
+        user: { id: userId },
       });
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Erro ao carregar tarefa');
@@ -77,10 +71,8 @@ export default function EditarTaskPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: TaskFormData) => {
     setError('');
-    setSuccess('');
     setSaving(true);
 
     try {
@@ -89,25 +81,21 @@ export default function EditarTaskPage() {
         throw new Error('Usuário não autenticado');
       }
 
-      if (!formData.categoryId) {
+      if (!data.categoryId) {
         throw new Error('Selecione uma categoria');
       }
 
       const taskData: Partial<CreateTaskDto> = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        dueDate: formData.dueDate || undefined,
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        dueDate: data.dueDate || undefined,
         user: { id: userId },
-        category: { id: parseInt(formData.categoryId) },
+        category: { id: parseInt(data.categoryId) },
       };
 
       await taskService.updateTask(parseInt(taskId), taskData);
-      setSuccess('Tarefa atualizada com sucesso!');
-      
-      setTimeout(() => {
-        router.push('/principal/tarefa');
-      }, 1500);
+      router.push('/principal/tarefa?success=Tarefa atualizada com sucesso!');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Erro ao atualizar tarefa');
     } finally {
@@ -115,17 +103,22 @@ export default function EditarTaskPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleCancel = () => {
+    router.push('/principal/tarefa');
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!initialData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="text-red-600 dark:text-red-400">Erro ao carregar dados da tarefa</div>
       </div>
     );
   }
@@ -158,115 +151,14 @@ export default function EditarTaskPage() {
             </div>
           )}
 
-          {success && (
-            <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 rounded-lg text-sm">
-              {success}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Título *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-                placeholder="Digite o título da tarefa"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Descrição *
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-                placeholder="Digite a descrição da tarefa"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Categoria *
-              </label>
-              <select
-                id="categoryId"
-                name="categoryId"
-                value={formData.categoryId}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-              >
-                <option value="">Selecione uma categoria</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Status *
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-              >
-                <option value={Status.PENDING}>Pendente</option>
-                <option value={Status.IN_PROGRESS}>Em Progresso</option>
-                <option value={Status.COMPLETED}>Concluída</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Data de Vencimento
-              </label>
-              <input
-                type="datetime-local"
-                id="dueDate"
-                name="dueDate"
-                value={formData.dueDate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Salvando...' : 'Salvar Alterações'}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/principal/tarefa')}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
+          <TaskForm
+            initialData={initialData}
+            categories={categories}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            submitButtonText="Salvar Alterações"
+            isLoading={saving}
+          />
         </div>
       </main>
     </div>
