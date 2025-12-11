@@ -66,8 +66,13 @@ export class TaskController {
 
   @Get('user/:id/count-by-status')
   @HttpCode(HttpStatus.OK)
-  async countTasksByStatus(@Param('id') id: string): Promise<ApiResponse<CountTaskDto>> {
+  async countTasksByStatus(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<CountTaskDto>> {
     const count = await this.taskService.countTasksByStatus(+id);
-    return ApiResponse.success('Task count by status retrieved successfully', count);
+    return ApiResponse.success(
+      'Task count by status retrieved successfully',
+      count,
+    );
   }
 }

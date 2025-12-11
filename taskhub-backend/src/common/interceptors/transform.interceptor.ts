@@ -21,7 +21,7 @@ export class TransformInterceptor<T>
         if (data instanceof ApiResponse) {
           return data;
         }
-        
+
         return ApiResponse.success('Operation successful', data);
       }),
     );

@@ -2,7 +2,13 @@ import { Account } from 'src/entities/account/account.entity';
 import { Category } from 'src/entities/category/entities/category.entity';
 import { Task } from 'src/entities/task/entities/task.entity';
 import { Role } from 'src/enums/role.enum';
-import { Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class User {
@@ -39,9 +45,8 @@ export class User {
   tasks: Task[];
 
   @OneToMany(() => Category, (category) => category.user)
-  categories: Category[]
-  
-  
+  categories: Category[];
+
   public possuiConta(): boolean {
     return !!this.account;
   }

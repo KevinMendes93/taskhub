@@ -9,7 +9,6 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -29,7 +28,9 @@ export class UserController {
   @Post()
   @Roles(Role.Admin)
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createUserDto: CreateUserDto): Promise<ApiResponse<UserResponseDto>> {
+  async create(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<ApiResponse<UserResponseDto>> {
     const user = await this.userService.create(createUserDto);
     return ApiResponse.success('User created successfully', user);
   }
@@ -49,7 +50,6 @@ export class UserController {
     const user = await this.userService.findOne(+id);
     return ApiResponse.success('User retrieved successfully', user);
   }
-
 
   @Patch(':id')
   @Roles(Role.Admin, Role.User)

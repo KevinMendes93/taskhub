@@ -16,21 +16,27 @@ export class TaskService {
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>,
     private readonly userService: UserService,
-    private readonly categoryService: CategoryService
-  ){}
+    private readonly categoryService: CategoryService,
+  ) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<TaskResponseDto> {    
+  async create(createTaskDto: CreateTaskDto): Promise<TaskResponseDto> {
     const userExists = await this.userService.userExists(createTaskDto.user.id);
-    if(!userExists) {
-      throw new NotFoundException(`User with ID ${createTaskDto.user.id} not found`);
-    };
+    if (!userExists) {
+      throw new NotFoundException(
+        `User with ID ${createTaskDto.user.id} not found`,
+      );
+    }
 
     if (await this.existsTaskNameInUser(createTaskDto)) {
-      throw new NotFoundException(`Task with name ${createTaskDto.title} already exists for this user`);
+      throw new NotFoundException(
+        `Task with name ${createTaskDto.title} already exists for this user`,
+      );
     }
 
     if (await !this.existsCategoryInUser(createTaskDto)) {
-      throw new NotFoundException(`This category do not exists in user's categories`);
+      throw new NotFoundException(
+        `This category do not exists in user's categories`,
+      );
     }
 
     const task = this.taskRepository.create(createTaskDto);
@@ -40,7 +46,9 @@ export class TaskService {
   }
 
   async findAll(): Promise<TaskResponseDto[]> {
-    const tasks = await this.taskRepository.find({ relations: ['user', 'category'] });
+    const tasks = await this.taskRepository.find({
+      relations: ['user', 'category'],
+    });
     return plainToInstance(TaskResponseDto, tasks);
   }
 
@@ -50,18 +58,18 @@ export class TaskService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const tasks = await this.taskRepository.find({ 
+    const tasks = await this.taskRepository.find({
       where: { user: { id: userId } },
-      relations: ['user', 'category']
+      relations: ['user', 'category'],
     });
 
     return plainToInstance(TaskResponseDto, tasks);
   }
 
-  async findOne(id: number): Promise<TaskResponseDto> {   
+  async findOne(id: number): Promise<TaskResponseDto> {
     const task = await this.taskRepository.findOne({
       where: { id },
-      relations: ['user', 'category']
+      relations: ['user', 'category'],
     });
 
     if (!task) {
@@ -72,17 +80,20 @@ export class TaskService {
   }
 
   async update(id: number, updateTaskDto: UpdateTaskDto) {
-    if (!await this.taskExists(id)) {
+    if (!(await this.taskExists(id))) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
     await this.taskRepository.update(id, updateTaskDto);
 
-    const updatedTask = await this.taskRepository.findOne({ where: { id }, relations: ['user', 'category'] });
+    const updatedTask = await this.taskRepository.findOne({
+      where: { id },
+      relations: ['user', 'category'],
+    });
     return plainToInstance(TaskResponseDto, updatedTask);
   }
 
   async remove(id: number) {
-    if (!await this.taskExists(id)) {
+    if (!(await this.taskExists(id))) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
     await this.taskRepository.delete(id);
@@ -94,26 +105,32 @@ export class TaskService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const pendingCount = await this.taskRepository.count({ where: { user: { id: userId }, status: Status.PENDING } });
-    const completedCount = await this.taskRepository.count({ where: { user: { id: userId }, status: Status.COMPLETED } });
+    const pendingCount = await this.taskRepository.count({
+      where: { user: { id: userId }, status: Status.PENDING },
+    });
+    const completedCount = await this.taskRepository.count({
+      where: { user: { id: userId }, status: Status.COMPLETED },
+    });
 
     return { pending: pendingCount, completed: completedCount };
   }
 
-  private async taskExists(id: number): Promise<Boolean> {
+  private async taskExists(id: number): Promise<boolean> {
     const task = await this.taskRepository.findOne({ where: { id } });
     return !!task;
   }
 
   private async existsTaskNameInUser(dto: CreateTaskDto): Promise<boolean> {
-    return await this.taskRepository.existsBy({ 
+    return await this.taskRepository.existsBy({
       title: dto.title,
-      user: { id: dto.user.id }
+      user: { id: dto.user.id },
     });
   }
 
   private async existsCategoryInUser(dto: CreateTaskDto): Promise<boolean> {
-    return await this.categoryService.categoryExists(dto.category.id) && 
-      await this.categoryService.existsCategoryInUser(dto);
+    return (
+      (await this.categoryService.categoryExists(dto.category.id)) &&
+      (await this.categoryService.existsCategoryInUser(dto))
+    );
   }
 }

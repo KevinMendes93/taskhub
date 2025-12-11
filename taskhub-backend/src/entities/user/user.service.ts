@@ -15,7 +15,6 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    
     const user: User = this.userRepository.create(createUserDto);
     await this.userRepository.save(user);
 
@@ -66,10 +65,9 @@ export class UserService {
   }
 
   private async findUserById(id: number): Promise<User | null> {
-    return await this.userRepository.findOne({ 
+    return await this.userRepository.findOne({
       where: { id },
-      relations: ['account'], 
+      relations: ['account'],
     });
   }
-
 }

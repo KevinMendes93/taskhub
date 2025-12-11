@@ -40,7 +40,10 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     const decoded = this.verifyRefreshToken(refreshToken);
-    const account = await this.validateStoredRefreshToken(decoded.sub, refreshToken);
+    const account = await this.validateStoredRefreshToken(
+      decoded.sub,
+      refreshToken,
+    );
 
     const accessToken = await this.generateAccessToken(account);
     const newRefreshToken = this.generateRefreshToken(account);
@@ -155,9 +158,7 @@ export class AuthService {
 
   private ensureUserExists(account: any): void {
     if (!account?.user) {
-      throw new UnauthorizedException(
-        AuthService.INVALID_CREDENTIALS_MESSAGE,
-      );
+      throw new UnauthorizedException(AuthService.INVALID_CREDENTIALS_MESSAGE);
     }
   }
 }

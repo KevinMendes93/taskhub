@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAccountDto } from 'src/entities/account/dto/create-account.dto';
 import { LoginDto } from 'src/entities/account/dto/login.dto';
@@ -12,9 +21,15 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async signIn(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.signIn(loginDto.login, loginDto.password);
-    
+  async signIn(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.signIn(
+      loginDto.login,
+      loginDto.password,
+    );
+
     // Setar refresh token como cookie httpOnly
     res.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
@@ -24,20 +39,25 @@ export class AuthController {
     });
 
     // Retornar apenas access_token no body
-    return ApiResponse.success('Login successful', { access_token: result.access_token });
+    return ApiResponse.success('Login successful', {
+      access_token: result.access_token,
+    });
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const refreshToken = req.cookies?.refresh_token;
-    
+
     if (!refreshToken) {
       return ApiResponse.error('Refresh token not found');
     }
 
     const result = await this.authService.refreshTokens(refreshToken);
-    
+
     // Atualizar cookie com novo refresh token (rotação)
     res.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
@@ -46,7 +66,9 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return ApiResponse.success('Tokens refreshed successfully', { access_token: result.access_token });
+    return ApiResponse.success('Tokens refreshed successfully', {
+      access_token: result.access_token,
+    });
   }
 
   @UseGuards(AuthGuard)
@@ -54,7 +76,7 @@ export class AuthController {
   @Post('logout')
   async logout(@Req() req: any, @Res({ passthrough: true }) res: Response) {
     const userId = req.user?.sub;
-    
+
     if (userId) {
       await this.authService.logout(userId);
     }

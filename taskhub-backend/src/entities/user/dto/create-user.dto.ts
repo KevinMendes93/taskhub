@@ -17,6 +17,9 @@ export class CreateUserDto {
   name: string;
 
   @IsOptional()
-  @IsEnum(Role, { each: true, message: 'Each role must be a valid Role enum value', })
+  @IsEnum(Role, {
+    each: true,
+    message: 'Each role must be a valid Role enum value',
+  })
   roles?: Role[];
 }

@@ -6,7 +6,6 @@ import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { CategoryResponseDto } from './dto/category-response.dto';
-import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { CreateTaskDto } from '../task/dto/create-task.dto';
 
@@ -15,22 +14,28 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-    private readonly userService: UserService
-  ){}
+    private readonly userService: UserService,
+  ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const userExists = await this.userService.userExists(createCategoryDto.user.id);
-    if(!userExists) {
-      throw new NotFoundException(`User with ID ${createCategoryDto.user.id} not found`);
-    };
+    const userExists = await this.userService.userExists(
+      createCategoryDto.user.id,
+    );
+    if (!userExists) {
+      throw new NotFoundException(
+        `User with ID ${createCategoryDto.user.id} not found`,
+      );
+    }
 
-    const existsCategoryNameInUser = await this.categoryRepository.existsBy({ 
+    const existsCategoryNameInUser = await this.categoryRepository.existsBy({
       name: createCategoryDto.name,
-      user: { id: createCategoryDto.user.id }
+      user: { id: createCategoryDto.user.id },
     });
 
     if (existsCategoryNameInUser) {
-      throw new NotFoundException(`Category with name ${createCategoryDto.name} already exists for this user`);
+      throw new NotFoundException(
+        `Category with name ${createCategoryDto.name} already exists for this user`,
+      );
     }
 
     const category = this.categoryRepository.create(createCategoryDto);
@@ -40,7 +45,9 @@ export class CategoryService {
   }
 
   async findAll() {
-    const categories = await this.categoryRepository.find({ relations: ['user'] });
+    const categories = await this.categoryRepository.find({
+      relations: ['user'],
+    });
     return plainToInstance(CategoryResponseDto, categories);
   }
 
@@ -50,9 +57,9 @@ export class CategoryService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const categories = await this.categoryRepository.find({ 
+    const categories = await this.categoryRepository.find({
       where: { user: { id: userId } },
-      relations: ['user']
+      relations: ['user'],
     });
 
     return plainToInstance(CategoryResponseDto, categories);
@@ -63,10 +70,10 @@ export class CategoryService {
     if (!existsCategory) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
-    
+
     const category = await this.categoryRepository.findOne({
       where: { id },
-      relations: ['user']
+      relations: ['user'],
     });
 
     return plainToInstance(CategoryResponseDto, category);
@@ -78,18 +85,20 @@ export class CategoryService {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
-    const categoryBelongsToUser = await this.categoryRepository.existsBy({ 
-      id, 
-      user: { id: updateCategoryDto.user.id }
+    const categoryBelongsToUser = await this.categoryRepository.existsBy({
+      id,
+      user: { id: updateCategoryDto.user.id },
     });
     if (!categoryBelongsToUser) {
-      throw new NotFoundException(`Category with ID ${id} does not belong to User with ID ${updateCategoryDto.user.id}`);
+      throw new NotFoundException(
+        `Category with ID ${id} does not belong to User with ID ${updateCategoryDto.user.id}`,
+      );
     }
 
     await this.categoryRepository.update(id, updateCategoryDto);
-    const updatedCategory = await this.categoryRepository.findOne({ 
-      where: { id }, 
-      relations: ['user'] 
+    const updatedCategory = await this.categoryRepository.findOne({
+      where: { id },
+      relations: ['user'],
     });
 
     return plainToInstance(CategoryResponseDto, updatedCategory);
@@ -102,20 +111,25 @@ export class CategoryService {
     }
 
     await this.categoryRepository.delete(id);
-    return {deleted: true, id};
+    return { deleted: true, id };
   }
 
-  async categoryExists(id: number): Promise<Boolean> {
+  async categoryExists(id: number): Promise<boolean> {
     const category = await this.categoryRepository.findOne({ where: { id } });
     return !!category;
   }
 
   async existsCategoryInUser(dto: CreateTaskDto) {
-    return await this.categoryRepository.existsBy({ user: { id: dto.user.id }, id: dto.category.id });
+    return await this.categoryRepository.existsBy({
+      user: { id: dto.user.id },
+      id: dto.category.id,
+    });
   }
 
   async countCategoriesByUser(userId: number): Promise<number> {
-    const count = await this.categoryRepository.count({ where: { user: { id: userId } } });
+    const count = await this.categoryRepository.count({
+      where: { user: { id: userId } },
+    });
     return count;
   }
 }

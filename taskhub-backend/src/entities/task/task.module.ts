@@ -9,10 +9,6 @@ import { CategoryModule } from '../category/category.module';
 @Module({
   controllers: [TaskController],
   providers: [TaskService],
-  imports: [
-    TypeOrmModule.forFeature([Task]),
-    UserModule,
-    CategoryModule
-  ],
+  imports: [TypeOrmModule.forFeature([Task]), UserModule, CategoryModule],
 })
 export class TaskModule {}

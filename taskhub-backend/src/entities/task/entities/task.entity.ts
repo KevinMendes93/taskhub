@@ -1,11 +1,16 @@
 import { Category } from 'src/entities/category/entities/category.entity';
 import { User } from 'src/entities/user/entities/user.entity';
 import { Status } from 'src/enums/status.enum';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'tasks' })
 export class Task {
-
   @PrimaryGeneratedColumn()
   id: number;
 
